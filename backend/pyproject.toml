@@ -1,0 +1,58 @@
+[tool.poetry]
+name = "whisper-task-backend"
+version = "0.1.0"
+description = "a task manager backend of openai whisper to generate video subtitles"
+authors = ["gowinder <gowinder@hotmail.com>"]
+readme = "README.md"
+packages = [{include = "whisper_task_backend"}]
+
+# [[tool.poetry.source]]
+# name = "ustc"
+# url = "https://mirrors.ustc.edu.cn/pypi/"
+# default = true
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.95.0"
+sqlalchemy = "^2.0.7"
+alembic = "^1.10.2"
+aioredis = "^2.0.1"
+aiohttp = "^3.8.4"
+aiofile = "^3.8.5"  
+celery = "^5.2.7"
+torch = "^2.0.0"
+simplejson = "^3.18.4"
+pytest = "^7.2.2"
+pytest-cov = "^4.0.0"
+pytest-async = "^0.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 79
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+py_version = 310
+
+[tool.mypy]
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
