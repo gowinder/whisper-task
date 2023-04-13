@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import (
     Column,
     DateTime,
@@ -47,14 +48,15 @@ class Setting(Base):
 class WhisperTask(Base):
     __tablename__ = "whisper_tasks"
     id = mapped_column(Integer, primary_key=True)
-    filename = mapped_column(String)
-    fullpath = mapped_column(String)
-    progress = mapped_column(Float)
-    status = mapped_column(Integer)
-    enabled = mapped_column(Boolean)
-    message = mapped_column(String)
-    created_at = mapped_column(DateTime)
-    updated_at = mapped_column(DateTime)
+    filename = mapped_column(String, default="")
+    fullpath = mapped_column(String, default="")
+    progress = mapped_column(Float, default=0.0)
+    status = mapped_column(Integer, default=0)
+    enabled = mapped_column(Boolean, default=True)
+    message = mapped_column(String, default="")
+    cmd = mapped_column(String, default="")
+    created_at = mapped_column(DateTime, default=datetime.now())
+    updated_at = mapped_column(DateTime, default=datetime.now())
 
     __table_args__ = (UniqueConstraint("fullpath"),)
 

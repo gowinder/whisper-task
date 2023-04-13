@@ -1,0 +1,23 @@
+{
+  // 使用 IntelliSense 了解相关属性。
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Celery",
+      "type": "python",
+      "request": "launch",
+      "module": "celery",
+      "cwd": "${workspaceFolder}/backend",
+      "pythonPath": "/Users/destroyer/Library/Caches/pypoetry/virtualenvs/whisper-task-backend-DamqwDb2-py3.10/bin/python",
+      "console": "integratedTerminal",
+      "args": ["-A", "app.task.celery", "worker", "-l", "info"],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "FASTAPI_ENV": "dev",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  ]
+}

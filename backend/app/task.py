@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from typing import List
 from celery import Celery, group
 import os
@@ -14,7 +15,7 @@ from app.constraints import (
     TASK_STATUS_IN_PROGRESS,
 )
 from app.model import WhisperTask
-from app.db import async_session
+from app.db import async_session, engine
 from app.crud import SettingCRUD, whisperTaskCrud, incomingFileCrud
 import whisper
 
@@ -44,9 +45,13 @@ def get_task_count(task_name: str) -> int:
     return task_count
 
 
-@celery.task
+@celery.task(name="celery_scan_task")
 def celery_scan_task():
-    asyncio.run(scan_task())
+    logger.info("start scan task")
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(scan_task())
+    loop.close()
 
 
 # >>> from celery.task.control import revoke
@@ -73,17 +78,22 @@ async def scan_task():
                 if file.endswith(tuple(settingObj["include_exts"])):
                     logger.info("matched file: %s", file)
                     fullpath = os.path.join(root, file)
+                    # TODO check if file is already in db if rescan is not set
                     # TODO set stable order score
                     await cache.zadd(SCAN_FILES_KEY, {fullpath: int(time.time())})
-                    await cache.lpush(SCAN_LOG_KEY, "Scanned file: " + fullpath)
+                    scanlog = f"[{datetime.now()}] scanned file: {fullpath}"
+                    await cache.lpush(SCAN_LOG_KEY, scanlog)
 
         logger.info("scan ended")
         return True
 
 
-@celery.task
+@celery.task(name="celery_scheduler_task")
 def celery_scheduler_task():
-    asyncio.run(scheduler_task())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(scheduler_task())
+    loop.close()
 
 
 async def scheduler_task():
@@ -102,7 +112,11 @@ async def scheduler_task():
     if whisper_tasks and len(whisper_tasks) > 0:
         resume_task = group()
         for record in whisper_tasks:
-            record.message = record.message + "task restarted\n"
+            record.message = (
+                record.message + "task restarted\n"
+                if record.message is not None
+                else "task restarted\n"
+            )
             await whisperTaskCrud.update(session, record)
             logger.info("   resume task: %d, filename: %s", record.id, record.filename)
             celery.send_task("celery_whisper_task", args=[record.id])
@@ -116,10 +130,13 @@ async def scheduler_task():
             continue
         scanned_files = await cache.zrange(SCAN_FILES_KEY, 0, 0, withscores=True)
         if scanned_files and len(scanned_files) > 0:
-            fullpath = scanned_files[0][0]
-            if await whisperTaskCrud.get_by_fullpath(session, fullpath):
+            fullpath = scanned_files[0][0].decode("utf-8")
+            if await whisperTaskCrud.get_by_fullpath(session, fullpath) is not None:
                 # already exists
                 # TODO need optimize for already exists record to skip in cache
+
+                # remove this one from SCAN_FILES_KEY
+                await cache.zrem(SCAN_FILES_KEY, fullpath)
                 continue
             filename = os.path.basename(fullpath)
             logger.debug(
@@ -144,62 +161,98 @@ async def scheduler_task():
         # result.join()
 
 
-@celery.task
+@celery.task(name="celery_whisper_task")
 def celery_whisper_task(task_id: int):
-    asyncio.run(whisper_task(task_id))
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(whisper_task(task_id))
+    loop.close()
 
 
-@celery.task
 async def whisper_task(task_id: int):
     logger.info("start whisper task: %d", task_id)
-    session = async_session()
-    record = await whisperTaskCrud.get(session, task_id)
-    cmd = await generate_whisper_cmd(session, record)
-    logger.debug("whisper task: %d, cmd: %s", task_id, cmd)
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    for output in process.stdout:
-        # 更新任务状态（进度、日志等）
-        # TODO update task not this fequently
+    async with async_session() as session:
+        record = await whisperTaskCrud.get(session, task_id)
+        if record is None:
+            logger.error(f"whisper task: {task_id}, task_id not found")
+            return
+        cmd = await generate_whisper_cmd(session, record)
+        logger.debug(f"whisper task: {task_id}, cmd: {cmd}")
+        # update status
+        record.cmd = cmd
         await update_task_status(
-            session, record, TASK_STATUS_IN_PROGRESS, 0.0, output.decode()
+            session, record, TASK_STATUS_IN_PROGRESS, 0.0, "task started\n"
         )
-    # check process exit code
-    exit_code = process.wait()
-    if exit_code == 0:
-        await update_task_status(session, record, TASK_STATUS_DONE, 100.0, "done\n")
-    else:
-        await update_task_status(session, record, TASK_STATUS_FAILED, 100.0, "failed\n")
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=1,
+            universal_newlines=True,
+            shell=True,
+        )
+        # stdout, stderr = process.communicate()
+        # for output in stdout.decode().splitlines():
+        while True:
+            output = process.stdout.readline()
+            if output == "" and process.poll() is not None:
+                break
+            logger.debug(f"whisper task: {task_id}, output: {output}")
+            # 更新任务状态（进度、日志等）
+            # TODO update task not this fequently
+            await update_task_status(
+                session, record, TASK_STATUS_IN_PROGRESS, 0.0, output
+            )
+        # check process exit code
+        exit_code = process.wait()
+        logger.info(f"whisper task: {task_id}, exit code: {exit_code}")
+        if exit_code == 0:
+            await update_task_status(session, record, TASK_STATUS_DONE, 100.0, "done\n")
+        else:
+            error_msg = "\n%s \nfailed, exit code: %s\n" % (
+                "".join(process.stderr.readlines()),
+                exit_code,
+            )
+            logger.error(error_msg)
+            await update_task_status(
+                session,
+                record,
+                TASK_STATUS_FAILED,
+                100.0,
+                error_msg,
+            )
+    logger.info("end whisper task: %d", task_id)
 
 
 # TODO need generate unit test for this function
-async def generate_whisper_cmd(session, whisper_task_record) -> List[str]:
+async def generate_whisper_cmd(session, whisper_task_record) -> str:
     cmd = [
         "whisper",
     ]
     settingCrud = SettingCRUD()
     settingObj = await settingCrud.get_valueJsonObj(session)
-    if settingObj["language"]:
+    if "language" in settingObj:
         cmd.append("--language")
         cmd.append(settingObj["language"])
-    if settingObj["model"]:
+    if "model" in settingObj:
         cmd.append("--model")
         cmd.append(settingObj["model"])
-    if settingObj["translate"]:
+    if "translate" in settingObj:
         cmd.append("--task")
         cmd.append("translate")
-    if settingObj["no_speech_threshold"]:
+    if "no_speech_threshold" in settingObj:
         cmd.append("--no_speech_threshold")
         cmd.append(settingObj["no_speech_threshold"])
-    if settingObj["logprob_threshold"]:
+    if "logprob_threshold" in settingObj:
         cmd.append("--logprob_threshold")
         cmd.append(settingObj["logprob_threshold"])
-    if settingObj["compression_ratio_threshold"]:
+    if "compression_ratio_threshold" in settingObj:
         cmd.append("--compression_ratio_threshold")
         cmd.append(settingObj["compression_ratio_threshold"])
 
-    cmd.append(whisper_task_record.filename)
+    cmd.append(whisper_task_record.fullpath)
 
-    return cmd
+    return " ".join(cmd)
 
 
 async def update_task_status(

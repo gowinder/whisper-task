@@ -41,3 +41,20 @@ class WhisperTaskDTO(BaseModel):
     message: str
     created_at: datetime
     updated_at: datetime
+
+
+class ScanTaskLogFilter(BaseModel):
+    page: int = 0
+    count: int = 10
+
+    @validator("count")
+    def count_must_be_valid(cls, v):
+        if v < 0 or v > 50:
+            raise ValueError("raw count in one page must between 0 to 50")
+        return v
+
+    @validator("page")
+    def start_page_must_be_valid(cls, v):
+        if v < 0:
+            raise ValueError("page must be equal or greater than 0")
+        return v

@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from typing import List
 import simplejson as json
@@ -54,29 +55,32 @@ class SettingCRUD:
 
 class WhisperTaskCRUD:
     async def get(self, session, id) -> WhisperTask | None:
-        setting = (
-            await session.execute(
-                select(WhisperTask).filter(WhisperTask.id == id).limit(1)
-            )
-        ).scalar()
-        return setting
+        setting = await session.execute(
+            select(WhisperTask).filter(WhisperTask.id == id).limit(1)
+        )
+
+        return setting.scalar_one_or_none()
 
     async def filter(self, session, filter) -> List[WhisperTask]:
         result = None
         if filter.status is None:
             sql = (
                 select(WhisperTask)
+                .order_by(WhisperTask.created_date.desc())
                 .offset(filter.page * filter.count)
                 .limit(filter.count)
             )
+
             result = await session.execute(sql)
         else:
             sql = (
                 select(WhisperTask)
                 .where(WhisperTask.status == filter.status)
+                .order_by(WhisperTask.created_date.desc())
                 .offset(filter.page * filter.count)
                 .limit(filter.count)
             )
+
             result = await session.execute(sql)
 
         return result.scalars().fetchall()
@@ -93,20 +97,22 @@ class WhisperTaskCRUD:
         )
 
     async def get_by_fullpath(self, session, fullpath) -> WhisperTask | None:
-        task = (
-            await session.execute(
-                select(WhisperTask).filter(WhisperTask.fullpath == fullpath).limit(1)
-            )
-        ).scalar()
-        return task
+        task = await session.execute(
+            select(WhisperTask).filter(WhisperTask.fullpath == fullpath).limit(1)
+        )
+
+        return task.scalar_one_or_none()
 
     async def create(self, session, whisper_task: WhisperTask) -> WhisperTask:
+        whisper_task.created_at = datetime.now()
+        whisper_task.updated_at = datetime.now()
         session.add(whisper_task)
         await session.commit()
         await session.refresh(whisper_task)
         return whisper_task
 
     async def update(self, session, updated_whisper_task: WhisperTask) -> WhisperTask:
+        updated_whisper_task.updated_at = datetime.now()
         session.add(updated_whisper_task)
         await session.commit()
         await session.refresh(updated_whisper_task)
@@ -120,6 +126,8 @@ class WhisperTaskCRUD:
 
 class IncomingFileCRUD:
     async def create(self, session, incoming_file):
+        incoming_file.created_at = datetime.now()
+        incoming_file.updated_at = datetime.now()
         session.add(incoming_file)
         await session.commit()
         await session.refresh(incoming_file)
@@ -132,6 +140,7 @@ class IncomingFileCRUD:
         return setting
 
     async def update(self, session, updated_incoming_file):
+        updated_incoming_file.updated_at = datetime.now()
         session.add(updated_incoming_file)
         await session.commit()
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+import json
 from typing import Any, List
 import logging
 from fastapi import Depends, FastAPI, Request
@@ -25,6 +26,8 @@ from app.crud import SettingCRUD
 from app.schema import WhisperTaskFilter
 from app.crud import WhisperTaskCRUD
 from app.schema import WhisperTaskDTO
+from app.schema import ScanTaskLogFilter
+from app.task import celery
 
 # Load environment variables
 load_dotenv(f'.env.{os.environ.get("FASTAPI_ENV")}')
@@ -53,15 +56,15 @@ def app_logger() -> logging.Logger:
 # Save and load setting API
 @app.post("/settings")
 async def save_setting(
-    request: Request,
     newSettings: SaveSettingDTO,
     session=Depends(async_session_func),
     settingCrud=Depends(SettingCRUD),
     logger: logging.Logger = Depends(app_logger),
 ):
     logger.info("save_setting: %s", newSettings)
+    values = json.loads(newSettings.values)
     # async with async_session() as session:
-    await settingCrud.set_valueJsonObj(session, newSettings)
+    await settingCrud.set_valueJsonObj(session, values)
     return {"status": "success"}
 
 
@@ -105,10 +108,14 @@ async def scan_task_control(action: str):
 
 # Get scan task log API
 @app.get("/scan_task_log")
-async def get_scan_task_log(page: int, count: int, cache=Depends(get_redis)):
+async def get_scan_task_log(
+    filter: ScanTaskLogFilter = Depends(),
+    cache=Depends(get_redis),
+    logger: logging.Logger = Depends(app_logger),
+):
     """_summary_
 
-    :param page: page number, start from 1
+    :param page: page number, start from 0
     :type page: int
     :param count: _description_
     :type count: int
@@ -117,18 +124,21 @@ async def get_scan_task_log(page: int, count: int, cache=Depends(get_redis)):
     """
     # Read scan log from Redis cache
     log_size = await cache.llen(SCAN_LOG_KEY)
+    logger.debug("log_size: %s", log_size)
     start = -10
     end = -1
-    if page > 0 and page <= log_size / count:
-        start = (page - 1) * count
-        end = start + count - 1
+    if filter.page > 0 and filter.page <= log_size / filter.count:
+        start = (filter.page - 1) * filter.count
+        end = start + filter.count - 1
 
     scan_log = await cache.lrange(SCAN_LOG_KEY, start, end)
     return {"scan_log": scan_log}
 
 
 @app.on_event("startup")
-async def startup():
+def startup():
+    logger = logging.getLogger(__name__)
+    logger.info("startup")
     celery_scan_task.delay()
     celery_scheduler_task.delay()
 
