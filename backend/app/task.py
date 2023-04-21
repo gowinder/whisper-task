@@ -20,6 +20,7 @@ from app.crud import SettingCRUD, whisperTaskCrud, incomingFileCrud
 import whisper
 
 from app.logger import get_logger
+from app.whisper import do_whisper
 
 
 load_dotenv(f'.env.{os.environ.get("FASTAPI_ENV")}')
@@ -33,6 +34,13 @@ logger = get_logger(__name__)
 
 
 def get_task_count(task_name: str) -> int:
+    """get current task count by task name
+
+    :param task_name: task name
+    :type task_name: str
+    :return: current running task count by name
+    :rtype: int
+    """
     inspector = celery.control.inspect()
     active_tasks = inspector.active()
     task_count = 0
@@ -45,11 +53,28 @@ def get_task_count(task_name: str) -> int:
     return task_count
 
 
+def check_whisper_corouting(settingObj) -> bool:
+    """check current whisper task count
+        corouting in settingObj, if not, use default 1
+    :param settingObj: setting obj
+    :type settingObj: _type_
+    :return: True if current task count is less than corouting, else False
+    :rtype: bool
+    """
+    corouting = 1
+    if "corouting" in settingObj:
+        corouting = settingObj["corouting"]
+    task_count = get_task_count("celery_whisper_task")
+    if task_count >= corouting:
+        return False
+    return True
+
+
 @celery.task(name="celery_scan_task")
 def celery_scan_task():
     logger.info("start scan task")
     loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    # asyncio.set_event_loop(loop)
     loop.run_until_complete(scan_task())
     loop.close()
 
@@ -123,21 +148,25 @@ async def scheduler_task():
 
     logger.info("   start new task loop")
     while True:
-        # TODO max task count set into setting
-        if get_task_count("celery_whisper_task") >= 1:
-            # TODO sleep seconds set into setting
-            await asyncio.sleep(10)
-            continue
         scanned_files = await cache.zrange(SCAN_FILES_KEY, 0, 0, withscores=True)
         if scanned_files and len(scanned_files) > 0:
             fullpath = scanned_files[0][0].decode("utf-8")
-            if await whisperTaskCrud.get_by_fullpath(session, fullpath) is not None:
+            whisperTaskRecord = await whisperTaskCrud.get_by_fullpath(session, fullpath)
+            if whisperTaskRecord is not None:
                 # already exists
-                # TODO need optimize for already exists record to skip in cache
-
-                # remove this one from SCAN_FILES_KEY
+                logger.debug(
+                    "  skip task for file: %s, fullpath: %s",
+                    whisperTaskRecord.filename,
+                    whisperTaskRecord.fullpath,
+                )
                 await cache.zrem(SCAN_FILES_KEY, fullpath)
                 continue
+            # TODO check incoming file record
+
+            if not check_whisper_corouting(settingObj):
+                logger.info("   corouting limit, wait for next loop")
+                break
+
             filename = os.path.basename(fullpath)
             logger.debug(
                 "  create new task for file: %s, fullpath: %s",
@@ -157,12 +186,13 @@ async def scheduler_task():
             # new_task |= celery_whisper_task.s(record.id)
             logger.info("   start new task: %d, filename: %s", record_id, filename)
             celery.send_task("celery_whisper_task", args=[record_id])
-        # result = new_task.apply_async()
-        # result.join()
+
+        # TODO check failed task
 
 
 @celery.task(name="celery_whisper_task")
 def celery_whisper_task(task_id: int):
+    logger.info(f"celery_whisper_taskk: {task_id}")
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(whisper_task(task_id))
@@ -176,83 +206,14 @@ async def whisper_task(task_id: int):
         if record is None:
             logger.error(f"whisper task: {task_id}, task_id not found")
             return
-        cmd = await generate_whisper_cmd(session, record)
-        logger.debug(f"whisper task: {task_id}, cmd: {cmd}")
-        # update status
-        record.cmd = cmd
+
         await update_task_status(
             session, record, TASK_STATUS_IN_PROGRESS, 0.0, "task started\n"
         )
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=1,
-            universal_newlines=True,
-            shell=True,
-        )
-        # stdout, stderr = process.communicate()
-        # for output in stdout.decode().splitlines():
-        while True:
-            output = process.stdout.readline()
-            if output == "" and process.poll() is not None:
-                break
-            logger.debug(f"whisper task: {task_id}, output: {output}")
-            # 更新任务状态（进度、日志等）
-            # TODO update task not this fequently
-            await update_task_status(
-                session, record, TASK_STATUS_IN_PROGRESS, 0.0, output
-            )
-        # check process exit code
-        exit_code = process.wait()
-        logger.info(f"whisper task: {task_id}, exit code: {exit_code}")
-        if exit_code == 0:
-            await update_task_status(session, record, TASK_STATUS_DONE, 100.0, "done\n")
-        else:
-            error_msg = "\n%s \nfailed, exit code: %s\n" % (
-                "".join(process.stderr.readlines()),
-                exit_code,
-            )
-            logger.error(error_msg)
-            await update_task_status(
-                session,
-                record,
-                TASK_STATUS_FAILED,
-                100.0,
-                error_msg,
-            )
+        setting = await SettingCRUD().get_valueJsonObj(session)
+        await do_whisper(setting, record)
+
     logger.info("end whisper task: %d", task_id)
-
-
-# TODO need generate unit test for this function
-async def generate_whisper_cmd(session, whisper_task_record) -> str:
-    cmd = [
-        "whisper",
-    ]
-    settingCrud = SettingCRUD()
-    settingObj = await settingCrud.get_valueJsonObj(session)
-    if "language" in settingObj:
-        cmd.append("--language")
-        cmd.append(settingObj["language"])
-    if "model" in settingObj:
-        cmd.append("--model")
-        cmd.append(settingObj["model"])
-    if "translate" in settingObj:
-        cmd.append("--task")
-        cmd.append("translate")
-    if "no_speech_threshold" in settingObj:
-        cmd.append("--no_speech_threshold")
-        cmd.append(settingObj["no_speech_threshold"])
-    if "logprob_threshold" in settingObj:
-        cmd.append("--logprob_threshold")
-        cmd.append(settingObj["logprob_threshold"])
-    if "compression_ratio_threshold" in settingObj:
-        cmd.append("--compression_ratio_threshold")
-        cmd.append(settingObj["compression_ratio_threshold"])
-
-    cmd.append(whisper_task_record.fullpath)
-
-    return " ".join(cmd)
 
 
 async def update_task_status(
