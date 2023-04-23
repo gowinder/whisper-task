@@ -75,3 +75,24 @@ class IncomingFile(Base):
     updated_at = mapped_column(DateTime)
 
     task = relationship("WhisperTask")
+
+    @staticmethod
+    def from_whisper_task(whisper_task: WhisperTask):
+        """generate a new IncomingFile from a WhisperTask
+
+        :param whisper_task: target whisper task record
+        :type whisper_task: WhisperTask
+        :return: a new IncomingFile
+        :rtype: _type_
+        """
+        incoming_file = IncomingFile()
+        incoming_file.filename = whisper_task.filename
+        incoming_file.fullpath = whisper_task.fullpath
+        incoming_file.task_id = whisper_task.id
+        incoming_file.status = whisper_task.status
+        incoming_file.progress = whisper_task.progress
+        incoming_file.enabled = whisper_task.enabled
+        incoming_file.message = whisper_task.message
+        incoming_file.created_at = whisper_task.created_at
+        incoming_file.updated_at = whisper_task.updated_at
+        return incoming_file

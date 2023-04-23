@@ -11,6 +11,7 @@ from app.logger import get_logger
 from app.db import async_session, sync_session
 
 from app.model import Setting, WhisperTask
+from app.model import IncomingFile
 
 
 logger = get_logger(__name__)
@@ -40,6 +41,21 @@ class WhisperProgressListener(ProgressListener):
         whisperTask.status = TASK_STATUS_DONE
         session.add(whisperTask)
         session.commit()
+
+        # using whisperTask to generate a new IncomingFile,
+        # if exsits IncomingFile, update it
+        incomingFile = (
+            session.query(IncomingFile)
+            .filter_by(whisper_task_id=self.whisper_id)
+            .first()
+        )
+        if incomingFile is None:
+            logger.info(
+                f"incomingFile(fullname: {whisperTask.fullpath}) is None, create one"
+            )
+            incomingFile = IncomingFile.from_whisper_task(whisperTask)
+            session.add(incomingFile)
+            session.commit()
 
         logger.info("Finished")
 
