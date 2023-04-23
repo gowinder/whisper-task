@@ -171,3 +171,4 @@ Temporary Items
 /**/.env.*
 /**/.env
 /**/test_scan_root/
+.vscode/*

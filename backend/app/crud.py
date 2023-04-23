@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from typing import List
 import simplejson as json
@@ -7,6 +7,8 @@ import sqlalchemy
 from app.model import Setting, WhisperTask, IncomingFile
 from app.db import async_session
 from dotenv import load_dotenv
+
+from app.constraints import TASK_STATUS_DONE
 
 load_dotenv(f'.env.{os.environ.get("FASTAPI_ENV")}')
 
@@ -123,6 +125,23 @@ class WhisperTaskCRUD:
         await session.execute(stmt)
         await session.commit()
 
+    async def delete_completed_by_time(self, session, delta_time: int):
+        """delete completed whisper task by seconds passed since last update
+
+        :param session: _description_
+        :type session: _type_
+        :param delta_time: passed seconds
+        :type delta_time: int
+        """
+        since = datetime.now() - timedelta(seconds=delta_time)
+        stmt = (
+            sqlalchemy.delete(WhisperTask)
+            .where(WhisperTask.status == TASK_STATUS_DONE)
+            .where(WhisperTask.updated_at < since)
+        )
+        await session.execute(stmt)
+        await session.commit()
+
 
 class IncomingFileCRUD:
     async def create(self, session, incoming_file):
@@ -132,6 +151,13 @@ class IncomingFileCRUD:
         await session.commit()
         await session.refresh(incoming_file)
         return incoming_file
+
+    async def get_by_fullpath(self, session, fullpath) -> WhisperTask | None:
+        task = await session.execute(
+            select(IncomingFile).filter(IncomingFile.fullpath == fullpath).limit(1)
+        )
+
+        return task.scalar_one_or_none()
 
     async def get(self, session, id):
         setting = (
