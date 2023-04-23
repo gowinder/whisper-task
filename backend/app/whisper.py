@@ -45,9 +45,7 @@ class WhisperProgressListener(ProgressListener):
         # using whisperTask to generate a new IncomingFile,
         # if exsits IncomingFile, update it
         incomingFile = (
-            session.query(IncomingFile)
-            .filter_by(whisper_task_id=self.whisper_id)
-            .first()
+            session.query(IncomingFile).filter_by(task_id=self.whisper_id).first()
         )
         if incomingFile is None:
             logger.info(

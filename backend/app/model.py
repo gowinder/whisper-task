@@ -6,7 +6,6 @@ from sqlalchemy import (
     String,
     Float,
     Boolean,
-    ForeignKey,
     Enum,
     UniqueConstraint,
 )
@@ -66,15 +65,13 @@ class IncomingFile(Base):
     id = mapped_column(Integer, primary_key=True)
     filename = mapped_column(String)
     fullpath = mapped_column(String)
-    task_id = mapped_column(Integer, ForeignKey("whisper_tasks.id"))
+    task_id = mapped_column(Integer)
     status = mapped_column(Integer)
     progress = mapped_column(Float)
     enabled = mapped_column(Boolean)
     message = mapped_column(String)
     created_at = mapped_column(DateTime)
     updated_at = mapped_column(DateTime)
-
-    task = relationship("WhisperTask")
 
     @staticmethod
     def from_whisper_task(whisper_task: WhisperTask):

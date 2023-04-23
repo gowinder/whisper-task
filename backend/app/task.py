@@ -51,6 +51,13 @@ def get_task_count(task_name: str) -> int:
                 if task["name"] == task_name:
                     task_count += 1
 
+    reserved_tasks = inspector.reserved()
+    if reserved_tasks:
+        for worker, tasks in reserved_tasks.items():
+            for task in tasks:
+                if task["name"] == task_name:
+                    task_count += 1
+
     return task_count
 
 
@@ -176,6 +183,14 @@ async def scheduler_task():
 
     logger.info("   start new task loop")
     while True:
+        # remove old whisper_task
+        # get whisper_task.status == TASK_STATUS_DONE and update_date is more than 1 day
+        await whisperTaskCrud.delete_completed_by_time(
+            session, timedelta(days=1).seconds
+        )
+
+        # TODO check failed task
+
         scanned_files = await cache.zrange(SCAN_FILES_KEY, 0, 0, withscores=True)
         if scanned_files and len(scanned_files) > 0:
             fullpath = scanned_files[0][0].decode("utf-8")
@@ -205,35 +220,26 @@ async def scheduler_task():
 
             if not check_whisper_corouting(settingObj):
                 logger.info("   corouting limit, wait for next loop")
-                break
-
-            filename = os.path.basename(fullpath)
-            logger.debug(
-                "  create new task for file: %s, fullpath: %s",
-                filename,
-                fullpath,
-            )
-            record = WhisperTask(
-                filename=filename,
-                fullpath=fullpath,
-                progress=0.0,
-                status=TASK_STATUS_IN_PROGRESS,
-                enabled=True,
-                message="tast created\n",
-            )
-            record = await whisperTaskCrud.create(session, record)
-            record_id = record.id
-            # new_task |= celery_whisper_task.s(record.id)
-            logger.info("   start new task: %d, filename: %s", record_id, filename)
-            celery.send_task("celery_whisper_task", args=[record_id])
-
-        # TODO check failed task
-
-        # remove old whisper_task
-        # get whisper_task.status == TASK_STATUS_DONE and update_date is more than 1 day
-        await whisperTaskCrud.delete_completed_by_time(
-            session, timedelta(days=1).seconds
-        )
+            else:
+                filename = os.path.basename(fullpath)
+                logger.debug(
+                    "  create new task for file: %s, fullpath: %s",
+                    filename,
+                    fullpath,
+                )
+                record = WhisperTask(
+                    filename=filename,
+                    fullpath=fullpath,
+                    progress=0.0,
+                    status=TASK_STATUS_IN_PROGRESS,
+                    enabled=True,
+                    message="tast created\n",
+                )
+                record = await whisperTaskCrud.create(session, record)
+                record_id = record.id
+                # new_task |= celery_whisper_task.s(record.id)
+                logger.info("   start new task: %d, filename: %s", record_id, filename)
+                celery.send_task("celery_whisper_task", args=[record_id])
 
         # read sleep seconds from setting
         settingObj = await settingCrud.get_valueJsonObj(session)
