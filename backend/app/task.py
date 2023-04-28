@@ -22,6 +22,7 @@ from app.logger import get_logger
 from app.whisper import do_whisper
 from app.crud import SettingCRUD, IncomingFileCRUD, WhisperTaskCRUD
 from app.model import IncomingFile
+from app.constraints import SCHEDULER_LOG_KEY
 
 
 load_dotenv(f'.env.{os.environ.get("FASTAPI_ENV")}')
@@ -32,6 +33,11 @@ celery = Celery(
 )
 
 logger = get_logger(__name__)
+
+
+async def push_log(cache, key, log):
+    logger.info(log)
+    await cache.lpush(key, log)
 
 
 def get_task_count(task_name: str) -> int:
@@ -155,9 +161,9 @@ def celery_scheduler_task():
 
 
 async def scheduler_task():
-    logger.info("start scheduler task")
-    session = async_session()
     cache = get_redis()
+    await push_log(cache, SCHEDULER_LOG_KEY, "start scheduler task")
+    session = async_session()
     settingCrud = SettingCRUD()
     whisperTaskCrud = WhisperTaskCRUD()
     incomingFileCrud = IncomingFileCRUD()
@@ -168,7 +174,7 @@ async def scheduler_task():
         session, TASK_STATUS_IN_PROGRESS
     )
 
-    logger.info("   check need resume task")
+    await push_log(cache, SCHEDULER_LOG_KEY, "   check need resume task")
     if need_resume_whisper_tasks and len(need_resume_whisper_tasks) > 0:
         resume_task = group()
         for record in need_resume_whisper_tasks:
@@ -178,10 +184,14 @@ async def scheduler_task():
                 else "task restarted\n"
             )
             await whisperTaskCrud.update(session, record)
-            logger.info("   resume task: %d, filename: %s", record.id, record.filename)
+            await push_log(
+                cache,
+                SCHEDULER_LOG_KEY,
+                "   resume task: %d, filename: %s" % (record.id, record.filenam),
+            )
             celery.send_task("celery_whisper_task", args=[record.id])
 
-    logger.info("   start new task loop")
+    await push_log(cache, SCHEDULER_LOG_KEY, "   start new task loop")
     while True:
         # remove old whisper_task
         # get whisper_task.status == TASK_STATUS_DONE and update_date is more than 1 day
@@ -198,10 +208,11 @@ async def scheduler_task():
             whisperTaskRecord = await whisperTaskCrud.get_by_fullpath(session, fullpath)
             if whisperTaskRecord is not None:
                 # already exists
-                logger.debug(
-                    "  skip task by whisper_task for file: %s, fullpath: %s",
-                    whisperTaskRecord.filename,
-                    whisperTaskRecord.fullpath,
+                await push_log(
+                    cache,
+                    SCHEDULER_LOG_KEY,
+                    "  skip task by whisper_task for file: %s, fullpath: %s"
+                    % (whisperTaskRecord.filename, whisperTaskRecord.fullpath),
                 )
                 await cache.zrem(SCAN_FILES_KEY, fullpath)
                 continue
@@ -215,17 +226,31 @@ async def scheduler_task():
                     fullpath,
                     fullpath,
                 )
+                await push_log(
+                    cache,
+                    SCHEDULER_LOG_KEY,
+                    "  skip task by incoming_file for file: %s, fullpath: %s"
+                    % (fullpath, fullpath),
+                )
                 await cache.zrem(SCAN_FILES_KEY, fullpath)
                 continue
 
             if not check_whisper_corouting(settingObj):
-                logger.info("   corouting limit, wait for next loop")
+                await push_log(
+                    cache, SCHEDULER_LOG_KEY, "   corouting limit, wait for next loop"
+                )
             else:
                 filename = os.path.basename(fullpath)
                 logger.debug(
                     "  create new task for file: %s, fullpath: %s",
                     filename,
                     fullpath,
+                )
+                await push_log(
+                    cache,
+                    SCHEDULER_LOG_KEY,
+                    "  create new task for file: %s, fullpath: %s"
+                    % (filename, fullpath),
                 )
                 record = WhisperTask(
                     filename=filename,
@@ -238,7 +263,11 @@ async def scheduler_task():
                 record = await whisperTaskCrud.create(session, record)
                 record_id = record.id
                 # new_task |= celery_whisper_task.s(record.id)
-                logger.info("   start new task: %d, filename: %s", record_id, filename)
+                await push_log(
+                    cache,
+                    SCHEDULER_LOG_KEY,
+                    "   start new task: %d, filename: %s" % (record_id, filename),
+                )
                 celery.send_task("celery_whisper_task", args=[record_id])
 
         # read sleep seconds from setting

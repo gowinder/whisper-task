@@ -68,7 +68,7 @@ class WhisperTaskCRUD:
         if filter.status is None:
             sql = (
                 select(WhisperTask)
-                .order_by(WhisperTask.created_date.desc())
+                .order_by(WhisperTask.created_at.desc())
                 .offset(filter.page * filter.count)
                 .limit(filter.count)
             )
@@ -78,7 +78,7 @@ class WhisperTaskCRUD:
             sql = (
                 select(WhisperTask)
                 .where(WhisperTask.status == filter.status)
-                .order_by(WhisperTask.created_date.desc())
+                .order_by(WhisperTask.created_at.desc())
                 .offset(filter.page * filter.count)
                 .limit(filter.count)
             )

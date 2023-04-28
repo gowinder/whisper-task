@@ -7,6 +7,7 @@ TASK_STATUS_FAILED: int = -1
 
 SCAN_FILES_KEY = "scanned-files"
 SCAN_LOG_KEY = "scanned-logs"
+SCHEDULER_LOG_KEY = "scheduler-logs"
 
 
 class WhisperTaskStatusEnum(IntEnum):
