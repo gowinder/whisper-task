@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import json
+import math
 from typing import Any, List
 import logging
 from fastapi import Depends, FastAPI, Request
@@ -28,12 +29,27 @@ from app.crud import WhisperTaskCRUD
 from app.schema import WhisperTaskDTO
 from app.schema import ScanTaskLogFilter
 from app.task import celery
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 load_dotenv(f'.env.{os.environ.get("FASTAPI_ENV")}')
 
 # Create FastAPI instance
 app = FastAPI()
+
+
+origins = [
+    "http://localhost:3000",
+]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def init_logging() -> None:
@@ -124,15 +140,22 @@ async def get_scan_task_log(
     """
     # Read scan log from Redis cache
     log_size = await cache.llen(SCAN_LOG_KEY)
-    logger.debug("log_size: %s", log_size)
-    start = -10
-    end = -1
-    if filter.page > 0 and filter.page <= log_size / filter.count:
-        start = (filter.page - 1) * filter.count
+    start = 0
+    end = 10
+    total_pages = math.ceil(log_size / filter.count)
+    logger.debug(
+        "/scan_task_log: filter: %s, log_size: %s, total_pages: %d",
+        filter,
+        log_size,
+        total_pages,
+    )
+    if filter.page >= 0 and filter.page < total_pages:
+        start = (filter.page) * filter.count
         end = start + filter.count - 1
 
+    logger.debug("/scan_task_log: start: %d, end: %d", start, end)
     scan_log = await cache.lrange(SCAN_LOG_KEY, start, end)
-    return {"scan_log": scan_log}
+    return {"scan_log": scan_log, "total_pages": total_pages, "page": filter.page}
 
 
 @app.on_event("startup")
