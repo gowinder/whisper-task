@@ -6,10 +6,16 @@ import reportWebVitals from './reportWebVitals';
 import { ScanLogs } from './components/ScanLogs';
 import { Box, Toolbar, IconButton, Typography, AppBar } from '@mui/material';
 import WhisperTaskList from './components/WhisperTaskList';
-import { MenuIcon, SettingsIcon } from '@mui/icons-material';
+import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { Provider } from 'react-redux';
+import store from './store/store';
+
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
+  <Provider store={store}>
   <React.StrictMode>
     <AppBar position="static">
       <Toolbar>
@@ -28,7 +34,9 @@ root.render(
       <WhisperTaskList />
       <ScanLogs />
     </Box>
-  </React.StrictMode>,
+  </React.StrictMode>
+
+</Provider>
 );
 
 // If you want to start measuring performance in your app, pass a function

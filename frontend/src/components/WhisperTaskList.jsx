@@ -21,7 +21,7 @@ import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ReplayIcon from "@mui/icons-material/Replay";
-import baseUrl from "../utils/apiClient";
+import { apiClient } from "../utils/apiClient";
 
 const WhisperTaskItem = ({ task }) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -29,7 +29,7 @@ const WhisperTaskItem = ({ task }) => {
 
   useEffect(() => {
     const timerId = setInterval(() => {
-      axios.get(`${baseUrl}/whisper_tasks/${task.id}`).then((res) => {
+      apiClient.get(`/whisper_tasks/${task.id}`).then((res) => {
         const updatedTask = res.data;
         setProgress(updatedTask.progress);
       });
@@ -43,14 +43,14 @@ const WhisperTaskItem = ({ task }) => {
       // delete the task from Redux store here
 
       // then call the API to delete it
-      axios.delete(`${WHISPER_BACKEND_URL}/whisper_tasks/${task.id}`);
+      axios.delete(`/whisper_tasks/${task.id}`);
     }, 5000);
   };
 
   const handleToggleEnable = () => {
     const newEnabledStatus = !task.enabled;
     axios
-      .patch(`${WHISPER_BACKEND_URL}/whisper_tasks/${task.id}`, {
+      .patch(`/whisper_tasks/${task.id}`, {
         enabled: newEnabledStatus,
       })
       .then((res) => {
@@ -60,7 +60,7 @@ const WhisperTaskItem = ({ task }) => {
 
   const handleCancel = () => {
     axios
-      .post(`${WHISPER_BACKEND_URL}/whisper_tasks/${task.id}/cancel`)
+      .post(`/whisper_tasks/${task.id}/cancel`)
       .then((res) => {
         // update the task in Redux store here
       });
@@ -68,7 +68,7 @@ const WhisperTaskItem = ({ task }) => {
 
   const handleRetry = () => {
     axios
-      .post(`${WHISPER_BACKEND_URL}/whisper_tasks/${task.id}/retry`)
+      .post(`/whisper_tasks/${task.id}/retry`)
       .then((res) => {
         // update the task in Redux store here
       });
