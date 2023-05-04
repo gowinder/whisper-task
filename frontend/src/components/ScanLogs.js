@@ -19,19 +19,21 @@ import { fetchLogs } from '../store/scanLogsSlice';
 export function ScanLogs() {
   const dispatch = useDispatch();
   const logs = useSelector((state) => state.logs.items);
+  const page = useSelector((state) => state.logs.page);
+  const total_pages = useSelector((state) => state.logs.total_pages);
   const logStatus = useSelector((state) => state.logs.status);
   const error = useSelector((state) => state.logs.error);
   const [expanded, setExpanded] = useState(false);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
 
   useEffect(() => {
     if (logStatus === 'idle') {
-      dispatch(fetchLogs());
+      dispatch(fetchLogs(page));
     }
 
     // Fetch data every 5 seconds
     const intervalId = setInterval(() => {
-      dispatch(fetchLogs());
+      dispatch(fetchLogs(page));
     }, 5000);
 
     return () => clearInterval(intervalId);
@@ -42,11 +44,11 @@ export function ScanLogs() {
   };
 
   const handlePageChange = (event, newPage) => {
-    setPage(newPage)
+    dispatch(fetchLogs(newPage));
   };
 
   const renderListItem = (log, index) => {
-    if (index < page * 10 || index >= (page + 1) * 10) return null; // 超出当前页的范围不渲染
+    // if (index < page * 10 || index >= (page + 1) * 10) return null; // 超出当前页的范围不渲染
 
     // const truncatedLog = log.length > 30 ? `${log.slice(0, 30)}...` : log; // 如果长度超过 30，截断加入 "..."
     const truncatedLog = log;
@@ -75,7 +77,7 @@ export function ScanLogs() {
               logs.map((log, index) => renderListItem(log, index))
               }
           </List>
-          {logs && logs.length > 10 && (
+          {total_pages > 1 && (
             <Box display="flex" justifyContent="center" marginTop={2}>
               <Button
                 disabled={page === 0}
@@ -87,11 +89,11 @@ export function ScanLogs() {
               </Button>
               <Box marginLeft={2} marginRight={2}>
                 <Typography variant="body2">
-                  Page {page + 1} / {Math.ceil(logs.length / 10)}
+                  Page {page + 1} / {total_pages}
                 </Typography>
               </Box>
               <Button
-                disabled={page === Math.ceil(logs.length / 10) - 1}
+                disabled={page === total_pages - 1}
                 variant="outlined"
                 color="primary"
                 onClick={(e) => handlePageChange(e, page + 1)}
