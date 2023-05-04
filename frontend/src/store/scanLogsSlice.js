@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { apiClient } from '../utils/apiClient';
 
-export const fetchLogs = createAsyncThunk('logs/fetchLogs', async (page) => {
+export const fetchLogs = createAsyncThunk('logs/fetchLogs', async (page, { getState }) => {
   const response = await apiClient.get(`/scan_task_log?page=${page}&count=10`);
   console.log("🚀 ~ file: scanLogsSlice.js:7 ~ fetchLogs ~ response:", response)
   return response.data;

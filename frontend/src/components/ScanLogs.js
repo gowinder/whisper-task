@@ -1,12 +1,12 @@
-import React, { Component, useEffect, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
   Button,
+  CircularProgress,
   List,
   ListItem,
   ListItemText,
@@ -24,7 +24,7 @@ export function ScanLogs() {
   const logStatus = useSelector((state) => state.logs.status);
   const error = useSelector((state) => state.logs.error);
   const [expanded, setExpanded] = useState(false);
-  // const [page, setPage] = useState(0);
+
 
   useEffect(() => {
     if (logStatus === 'idle') {
@@ -72,11 +72,12 @@ export function ScanLogs() {
           <Typography variant="h8">Scan logs</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <List disablePadding>
+        
+          (<List disablePadding>
             {logs &&
               logs.map((log, index) => renderListItem(log, index))
               }
-          </List>
+          </List>)
           {total_pages > 1 && (
             <Box display="flex" justifyContent="center" marginTop={2}>
               <Button
