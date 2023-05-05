@@ -43,9 +43,19 @@ class WhisperTaskDTO(BaseModel):
     updated_at: datetime
 
 
-class ScanTaskLogFilter(BaseModel):
+class TaskLogFilter(BaseModel):
+    task_type: str
     page: int = 0
     count: int = 10
+
+    @validator("task_type")
+    def log_type_must_be_valid(cls, v):
+        task_types = ["scheduler", "scan"]
+        if v not in task_types:
+            raise ValueError(
+                "task_types must be one of:%s, but got:%s" % (task_types, v)
+            )
+        return v
 
     @validator("count")
     def count_must_be_valid(cls, v):

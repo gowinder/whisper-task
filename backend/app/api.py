@@ -27,9 +27,11 @@ from app.crud import SettingCRUD
 from app.schema import WhisperTaskFilter
 from app.crud import WhisperTaskCRUD
 from app.schema import WhisperTaskDTO
-from app.schema import ScanTaskLogFilter
+from app.schema import TaskLogFilter
 from app.task import celery
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.constraints import SCHEDULER_LOG_KEY
 
 # Load environment variables
 load_dotenv(f'.env.{os.environ.get("FASTAPI_ENV")}')
@@ -125,7 +127,7 @@ async def scan_task_control(action: str):
 # Get scan task log API
 @app.get("/scan_task_log")
 async def get_scan_task_log(
-    filter: ScanTaskLogFilter = Depends(),
+    filter: TaskLogFilter = Depends(),
     cache=Depends(get_redis),
     logger: logging.Logger = Depends(app_logger),
 ):
@@ -156,6 +158,50 @@ async def get_scan_task_log(
     logger.debug("/scan_task_log: start: %d, end: %d", start, end)
     scan_log = await cache.lrange(SCAN_LOG_KEY, start, end)
     return {"scan_log": scan_log, "total_pages": total_pages, "page": filter.page}
+
+
+@app.get("/task_log")
+async def get_task_log(
+    filter: TaskLogFilter = Depends(),
+    cache=Depends(get_redis),
+    logger: logging.Logger = Depends(app_logger),
+):
+    """_summary_
+
+    :param page: page number, start from 0
+    :type page: int
+    :param count: _description_
+    :type count: int
+    :return: _description_
+    :rtype: _type_
+    """
+    # Read scan log from Redis cache
+    key_name = SCHEDULER_LOG_KEY
+    if filter.task_type == "scan":
+        key_name = SCAN_LOG_KEY
+    logger.debug("/task_log: task_type=%s, key_name=%s", filter.task_type, key_name)
+    log_size = await cache.llen(key_name)
+    start = 0
+    end = 10
+    total_pages = math.ceil(log_size / filter.count)
+    logger.debug(
+        "/task_log: filter: %s, log_size: %s, total_pages: %d",
+        filter,
+        log_size,
+        total_pages,
+    )
+    if filter.page >= 0 and filter.page < total_pages:
+        start = (filter.page) * filter.count
+        end = start + filter.count - 1
+
+    logger.debug("/task_log: start: %d, end: %d", start, end)
+    scan_log = await cache.lrange(key_name, start, end)
+    return {
+        "logs": scan_log,
+        "total_pages": total_pages,
+        "page": filter.page,
+        "task_type": filter.task_type,
+    }
 
 
 @app.on_event("startup")
