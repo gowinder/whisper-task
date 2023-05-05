@@ -2,13 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import { Box, Toolbar, IconButton, Typography, AppBar } from '@mui/material';
+import { Box, Toolbar, IconButton, Typography, AppBar, ThemeProvider, Stack } from '@mui/material';
 import WhisperTaskList from './components/WhisperTaskList';
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Provider } from 'react-redux';
 import store from './store/store';
 import { TaskLogs } from './components/TaskLogs';
+import App from './App';
+import theme from './theme/theme';
 
 
 
@@ -16,6 +18,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
   <React.StrictMode>
+  <ThemeProvider theme={theme}>
+
+    <App />
     <AppBar position="static">
       <Toolbar>
         <IconButton edge="start" color="inherit" aria-label="menu">
@@ -29,13 +34,15 @@ root.render(
         </IconButton>
       </Toolbar>
     </AppBar>
-    <Box sx={{ m: 2 }}>
+    <Stack sx={{ mx: 1 }} spacing={1}>
+    
       <WhisperTaskList />
       <TaskLogs task_type="scheduler" />
       <TaskLogs task_type="scan" />
       {/* <SchedulerTaskLogs /> */}
       {/* <ScanLogs /> */}
-    </Box>
+    </Stack>
+  </ThemeProvider>
   </React.StrictMode>
 
 </Provider>

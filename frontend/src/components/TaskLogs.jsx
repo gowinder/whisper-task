@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {apiClient} from "./../utils/apiClient";
+import theme from "../theme/theme";
 
 // const useStyles = makeStyles((theme) => ({
 //   root: (props) => ({
@@ -98,7 +99,7 @@ export function TaskLogs(props) {
 
   return (
     <Box>
-      <Accordion expanded={expanded}>
+      <Accordion expanded={expanded} sx={{ backgroundColor: theme.palette.primary[200], borderRadius: theme.shape.borderRadius }}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={handleExpandClick}
@@ -107,7 +108,7 @@ export function TaskLogs(props) {
           <Typography variant="h5">{title}</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <List disablePadding>
+          <List>
             {logs && logs.map((task, index) => renderListItem(task, index))}
           </List>
           {logs && totalPages > 1 && (
