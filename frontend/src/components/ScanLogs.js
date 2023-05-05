@@ -18,16 +18,16 @@ import { fetchLogs } from '../store/scanLogsSlice';
 
 export function ScanLogs() {
   const dispatch = useDispatch();
-  const logs = useSelector((state) => state.logs.items);
+  const logItems = useSelector((state) => state.logs.items);
   const page = useSelector((state) => state.logs.page);
-  const total_pages = useSelector((state) => state.logs.total_pages);
-  const logStatus = useSelector((state) => state.logs.status);
+  const totalPages = useSelector((state) => state.logs.total_pages);
+  const fetchStatus = useSelector((state) => state.logs.status);
   const error = useSelector((state) => state.logs.error);
   const [expanded, setExpanded] = useState(false);
 
 
   useEffect(() => {
-    if (logStatus === 'idle') {
+    if (fetchStatus === 'idle') {
       dispatch(fetchLogs(page));
     }
 
@@ -37,7 +37,7 @@ export function ScanLogs() {
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [logStatus, dispatch]);
+  }, [fetchStatus, page, dispatch]);
 
   const handleExpandClick = () => {
     setExpanded(!expanded)
@@ -73,12 +73,12 @@ export function ScanLogs() {
         </AccordionSummary>
         <AccordionDetails>
         
-          (<List disablePadding>
-            {logs &&
-              logs.map((log, index) => renderListItem(log, index))
+          <List disablePadding>
+            {logItems && logItems["scan"] &&
+              logItems["scan"].map((log, index) => renderListItem(log, index))
               }
-          </List>)
-          {total_pages > 1 && (
+          </List>
+          {totalPages > 1 && (
             <Box display="flex" justifyContent="center" marginTop={2}>
               <Button
                 disabled={page === 0}
@@ -90,11 +90,11 @@ export function ScanLogs() {
               </Button>
               <Box marginLeft={2} marginRight={2}>
                 <Typography variant="body2">
-                  Page {page + 1} / {total_pages}
+                  Page {page + 1} / {totalPages}
                 </Typography>
               </Box>
               <Button
-                disabled={page === total_pages - 1}
+                disabled={page === totalPages - 1}
                 variant="outlined"
                 color="primary"
                 onClick={(e) => handlePageChange(e, page + 1)}

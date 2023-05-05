@@ -2,8 +2,8 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { apiClient } from '../utils/apiClient';
 
-export const fetchLogs = createAsyncThunk('logs/fetchLogs', async (page, { getState }) => {
-  const response = await apiClient.get(`/scan_task_log?page=${page}&count=10`);
+export const fetchLogs = createAsyncThunk('logs/fetchLogs', async (task_type, page, { getState }) => {
+  const response = await apiClient.get(`/scan_task_log?task_type=${task_type}&page=${page}&count=10`);
   console.log("🚀 ~ file: scanLogsSlice.js:7 ~ fetchLogs ~ response:", response)
   return response.data;
 });
@@ -11,7 +11,7 @@ export const fetchLogs = createAsyncThunk('logs/fetchLogs', async (page, { getSt
 const scanLogSlice = createSlice({
   name: 'logs',
   initialState: {
-    items: [],
+    items: {},
     page: 0,
     total_pages: 0,
     status: 'idle',
@@ -24,7 +24,10 @@ const scanLogSlice = createSlice({
       })
       .addCase(fetchLogs.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.items = action.payload.scan_log;
+        let newItems = state.items
+        newItems[action.payload.task_type] = action.payload.scan_log;
+        state.items = newItems;
+        // state.items = action.payload.scan_log;
         state.page = action.payload.page;
         state.total_pages = action.payload.total_pages;
       })

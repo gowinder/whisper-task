@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import { ScanLogs } from './components/ScanLogs';
 import { Box, Toolbar, IconButton, Typography, AppBar } from '@mui/material';
 import WhisperTaskList from './components/WhisperTaskList';
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Provider } from 'react-redux';
 import store from './store/store';
+import { TaskLogs } from './components/TaskLogs';
 
 
 
@@ -31,7 +31,10 @@ root.render(
     </AppBar>
     <Box sx={{ m: 2 }}>
       <WhisperTaskList />
-      <ScanLogs />
+      <TaskLogs task_type="scheduler" />
+      <TaskLogs task_type="scan" />
+      {/* <SchedulerTaskLogs /> */}
+      {/* <ScanLogs /> */}
     </Box>
   </React.StrictMode>
 
