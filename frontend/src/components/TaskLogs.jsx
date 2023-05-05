@@ -8,27 +8,30 @@ import {
   List,
   ListItem,
   ListItemText,
+  Stack,
+  ThemeProvider,
   Tooltip,
   Typography,
+  makeStyles,
+  styled,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {apiClient} from "./../utils/apiClient";
 import theme from "../theme/theme";
 
-// const useStyles = makeStyles((theme) => ({
-//   root: (props) => ({
-//     backgroundColor: props.backgroundColor,
-//     color: theme.color,
-//   }),
-//   accordion: {
-//     marginBottom: theme.spacing(1),
-//   },
-// }));
 
-// interface ISchedulerTaskProps {
-//   tasks: string[];
-//   fetchTasks: (tasks: string[]) => void;
-// }
+const StyledAccordion = styled(Accordion)`
+  ${({ theme }) => `
+  cursor: pointer;
+  background-color: ${theme.palette.primary.main};
+  transition: ${theme.transitions.create(['background-color', 'transform'], {
+    duration: theme.transitions.duration.standard,
+  })};
+  &:hover {
+    background-color: ${theme.palette.secondary.main};
+  }
+  `}
+`;
 
 export function TaskLogs(props) {
   // const classes = useStyles();
@@ -98,8 +101,10 @@ export function TaskLogs(props) {
   };
 
   return (
-    <Box>
-      <Accordion expanded={expanded} sx={{ backgroundColor: theme.palette.primary[200], borderRadius: theme.shape.borderRadius }}>
+    <Stack>
+    <ThemeProvider theme={theme}>
+
+      <StyledAccordion sx={{ backgroundColor: theme.palette.primary[200], borderRadius: theme.shape.borderRadius }}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={handleExpandClick}
@@ -137,7 +142,8 @@ export function TaskLogs(props) {
           </Box>
           )}
         </AccordionDetails>
-      </Accordion>
-    </Box>
+      </StyledAccordion>
+    </ThemeProvider>
+    </Stack>
   );
 };
