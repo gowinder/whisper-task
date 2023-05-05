@@ -5,6 +5,7 @@ whisper API to generate .srt subtitles for video
 
 ## TODO
 
+- [ ] manual start scheduler and scan task in API
 - [ ] check current running whisper task
 - [ ] set srt output dir to video dir
 - [ ] maintain scan task in scheduler task

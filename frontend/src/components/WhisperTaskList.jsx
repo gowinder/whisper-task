@@ -13,6 +13,7 @@ import {
   AppBar,
   Toolbar,
   Typography,
+  Stack,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
@@ -127,8 +128,8 @@ const WhisperTaskItem = ({ task }) => {
 
 const WhisperTaskList = ({ tasks }) => {
   return (
-    <Box>
-      <AppBar position="static">
+    <Stack>
+      <AppBar position="static" sx={{ mx: 1, my: 1, borderRadius: 1 }}>
         <Toolbar>
           <Typography variant="h8">
             Whisper Task
@@ -139,7 +140,7 @@ const WhisperTaskList = ({ tasks }) => {
         {tasks &&
           tasks.map((task) => <WhisperTaskItem key={task.id} task={task} />)}
       </List>
-    </Box>
+    </Stack>
   );
 };
 
