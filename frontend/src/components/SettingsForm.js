@@ -242,9 +242,11 @@ function SettingsForm() {
         onChange={handleChange}
       />) }
 
-      {settingsData.language && (<FormControl fullWidth margin="normal">
+      {settingsData.language && (
+        <FormControl fullWidth margin="normal">
         <InputLabel>Language</InputLabel>
         <Select
+          label="Language"
           name="language"
           value={settingsData.language.toLowerCase()}
           onChange={handleChange}
@@ -255,13 +257,15 @@ function SettingsForm() {
             </MenuItem>
           ))}
         </Select>
-      </FormControl>)
+        </FormControl>
+        )
       }
 
     { settingsData.task && 
       (<FormControl fullWidth margin="normal">
         <InputLabel>Task</InputLabel>
         <Select
+          label="Task"
           name="task"
           value={settingsData.task}
           onChange={handleChange}
@@ -280,6 +284,7 @@ function SettingsForm() {
         <FormControl fullWidth margin="normal">
           <InputLabel>Include Extensions</InputLabel>
           <Select
+            label="Include Extensions"
             name="include_exts"
             multiple
             value={settingsData.include_exts}
