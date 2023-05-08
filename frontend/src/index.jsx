@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import { Box, Toolbar, IconButton, Typography, AppBar, ThemeProvider, Stack } from '@mui/material';
+import { Box, Toolbar, IconButton, Typography, AppBar, ThemeProvider, Stack, Dialog, Button, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import WhisperTaskList from './components/WhisperTaskList';
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -11,16 +11,27 @@ import store from './store/store';
 import { TaskLogs } from './components/TaskLogs';
 import App from './App';
 import theme from './theme/theme';
+import SettingsForm from './components/SettingsForm';
 
 
+function Index() {
+  const [openModal, setOpenModal] = React.useState(false);
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <Provider store={store}>
+  return (
+    <Provider store={store}>
   <React.StrictMode>
   <ThemeProvider theme={theme}>
 
     <App />
+    <Dialog open={openModal} onClose={() => setOpenModal(false)}>
+          <DialogTitle>Modal Title</DialogTitle>
+          <DialogContent>
+            <SettingsForm />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenModal(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
     <AppBar position="static">
       <Toolbar>
         <IconButton edge="start" color="inherit" aria-label="menu">
@@ -29,7 +40,7 @@ root.render(
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Whisper Task
         </Typography>
-        <IconButton edge="start" color="inherit" aria-label="setting">
+        <IconButton edge="start" color="inherit" aria-label="setting" onClick={() => setOpenModal(true)}>
           <SettingsIcon />
         </IconButton>
       </Toolbar>
@@ -46,6 +57,12 @@ root.render(
   </React.StrictMode>
 
 </Provider>
+  )
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <Index />
 );
 
 // If you want to start measuring performance in your app, pass a function

@@ -68,11 +68,11 @@ export function TaskLogs(props) {
       fetchLogs();
     }
 
-    const intervalId = setInterval(() => {
-      fetchLogs();
-    }, 5000);
+    // const intervalId = setInterval(() => {
+    //   fetchLogs();
+    // }, 5000);
 
-    return () => clearInterval(intervalId);
+    // return () => clearInterval(intervalId);
   }, [fetchStatus, title, props.task_type, fetchLogs]);
 
   const handleExpandClick = () => {

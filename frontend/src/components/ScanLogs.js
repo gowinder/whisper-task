@@ -32,11 +32,11 @@ export function ScanLogs() {
     }
 
     // Fetch data every 5 seconds
-    const intervalId = setInterval(() => {
-      dispatch(fetchLogs(page));
-    }, 5000);
+    // const intervalId = setInterval(() => {
+    //   dispatch(fetchLogs(page));
+    // }, 5000);
 
-    return () => clearInterval(intervalId);
+    // return () => clearInterval(intervalId);
   }, [fetchStatus, page, dispatch]);
 
   const handleExpandClick = () => {
