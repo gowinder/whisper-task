@@ -2,11 +2,16 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { apiClient } from '../utils/apiClient';
 
-export const fetchLogs = createAsyncThunk('logs/fetchLogs', async (task_type, page, { getState }) => {
-  const response = await apiClient.get(`/scan_task_log?task_type=${task_type}&page=${page}&count=10`);
-  console.log("🚀 ~ file: scanLogsSlice.js:7 ~ fetchLogs ~ response:", response)
-  return response.data;
-});
+export const fetchLogs = createAsyncThunk(
+  'logs/fetchLogs',
+  async (task_type, page, { getState }) => {
+    const response = await apiClient.get(
+      `/scan_task_log?task_type=${task_type}&page=${page}&count=10`,
+    );
+    console.log('🚀 ~ file: scanLogsSlice.js:7 ~ fetchLogs ~ response:', response);
+    return response.data;
+  },
+);
 
 const scanLogSlice = createSlice({
   name: 'logs',
@@ -24,7 +29,7 @@ const scanLogSlice = createSlice({
       })
       .addCase(fetchLogs.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        let newItems = state.items
+        let newItems = state.items;
         newItems[action.payload.task_type] = action.payload.scan_log;
         state.items = newItems;
         // state.items = action.payload.scan_log;
@@ -36,7 +41,7 @@ const scanLogSlice = createSlice({
         state.error = action.error.message;
       });
   },
-  reducers: undefined
+  reducers: undefined,
 });
 
 export default scanLogSlice.reducer;

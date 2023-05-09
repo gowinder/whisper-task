@@ -3,12 +3,12 @@ import { apiClient } from '../utils/apiClient';
 
 export const fetchSettings = createAsyncThunk('settings/fetchSettings', async () => {
   const response = await apiClient.get('/settings');
-  console.log("🚀 ~ file: settingsSlice.js:8 ~ fetchSettings ~ data:", response.data)
+  console.log('🚀 ~ file: settingsSlice.js:8 ~ fetchSettings ~ data:', response.data);
   return response.data;
 });
 
 export const updateSettings = createAsyncThunk('settings/updateSettings', async (data) => {
-  const response = await apiClient.post('/settings', {values: JSON.stringify(data)});
+  const response = await apiClient.post('/settings', { values: JSON.stringify(data) });
   return response.data;
 });
 
@@ -23,7 +23,7 @@ const settingsSlice = createSlice({
     setSettingsData: (state, action) => {
       // console.log("🚀 ~ file: settingsSlice.js:25 ~ action.payload:", action.payload)
       state.data = action.payload;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { connect } from 'react-redux';
+import axios from 'axios';
 import {
   List,
   ListItem,
@@ -14,15 +14,15 @@ import {
   Toolbar,
   Typography,
   Stack,
-} from "@mui/material";
-import LockIcon from "@mui/icons-material/Lock";
-import LockOpenIcon from "@mui/icons-material/LockOpen";
-import LoopIcon from "@mui/icons-material/Loop";
-import DoneIcon from "@mui/icons-material/Done";
-import CloseIcon from "@mui/icons-material/Close";
-import CancelIcon from "@mui/icons-material/Cancel";
-import ReplayIcon from "@mui/icons-material/Replay";
-import { apiClient } from "../utils/apiClient";
+} from '@mui/material';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import LoopIcon from '@mui/icons-material/Loop';
+import DoneIcon from '@mui/icons-material/Done';
+import CloseIcon from '@mui/icons-material/Close';
+import CancelIcon from '@mui/icons-material/Cancel';
+import ReplayIcon from '@mui/icons-material/Replay';
+import { apiClient } from '../utils/apiClient';
 
 const WhisperTaskItem = ({ task }) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -60,19 +60,15 @@ const WhisperTaskItem = ({ task }) => {
   };
 
   const handleCancel = () => {
-    axios
-      .post(`/whisper_tasks/${task.id}/cancel`)
-      .then((res) => {
-        // update the task in Redux store here
-      });
+    axios.post(`/whisper_tasks/${task.id}/cancel`).then((res) => {
+      // update the task in Redux store here
+    });
   };
 
   const handleRetry = () => {
-    axios
-      .post(`/whisper_tasks/${task.id}/retry`)
-      .then((res) => {
-        // update the task in Redux store here
-      });
+    axios.post(`/whisper_tasks/${task.id}/retry`).then((res) => {
+      // update the task in Redux store here
+    });
   };
 
   return (
@@ -81,7 +77,7 @@ const WhisperTaskItem = ({ task }) => {
       divider={true}
       sx={{
         opacity: isDeleting ? 0 : 1,
-        transition: "opacity 1s ease-out",
+        transition: 'opacity 1s ease-out',
       }}
     >
       <ListItemIcon>
@@ -95,11 +91,7 @@ const WhisperTaskItem = ({ task }) => {
         </Tooltip>
         <CircularProgress variant="determinate" value={progress} />
         {task.message && (
-          <ListItemText
-            color="textSecondary"
-            secondary={task.message}
-            sx={{ marginTop: 0 }}
-          />
+          <ListItemText color="textSecondary" secondary={task.message} sx={{ marginTop: 0 }} />
         )}
       </Box>
       {(task.status === 0 || task.status === -1) && (
@@ -113,10 +105,10 @@ const WhisperTaskItem = ({ task }) => {
       {isDeleting && (
         <Box
           sx={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            bgcolor: "grey.200",
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            bgcolor: 'grey.200',
             opacity: 0.6,
             zIndex: 1,
           }}
@@ -131,15 +123,10 @@ const WhisperTaskList = ({ tasks }) => {
     <Stack>
       <AppBar position="static" sx={{ mx: 1, my: 1, borderRadius: 1 }}>
         <Toolbar>
-          <Typography variant="h8">
-            Whisper Task
-          </Typography>
+          <Typography variant="h8">Whisper Task</Typography>
         </Toolbar>
       </AppBar>
-      <List>
-        {tasks &&
-          tasks.map((task) => <WhisperTaskItem key={task.id} task={task} />)}
-      </List>
+      <List>{tasks && tasks.map((task) => <WhisperTaskItem key={task.id} task={task} />)}</List>
     </Stack>
   );
 };

@@ -25,7 +25,6 @@ export function ScanLogs() {
   const error = useSelector((state) => state.logs.error);
   const [expanded, setExpanded] = useState(false);
 
-
   useEffect(() => {
     if (fetchStatus === 'idle') {
       dispatch(fetchLogs(page));
@@ -40,7 +39,7 @@ export function ScanLogs() {
   }, [fetchStatus, page, dispatch]);
 
   const handleExpandClick = () => {
-    setExpanded(!expanded)
+    setExpanded(!expanded);
   };
 
   const handlePageChange = (event, newPage) => {
@@ -72,11 +71,10 @@ export function ScanLogs() {
           <Typography variant="h8">Scan logs</Typography>
         </AccordionSummary>
         <AccordionDetails>
-        
           <List disablePadding>
-            {logItems && logItems["scan"] &&
-              logItems["scan"].map((log, index) => renderListItem(log, index))
-              }
+            {logItems &&
+              logItems['scan'] &&
+              logItems['scan'].map((log, index) => renderListItem(log, index))}
           </List>
           {totalPages > 1 && (
             <Box display="flex" justifyContent="center" marginTop={2}>
