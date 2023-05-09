@@ -82,8 +82,8 @@ async def save_setting(
     logger.info("save_setting: %s", newSettings)
     values = json.loads(newSettings.values)
     # async with async_session() as session:
-    await settingCrud.set_valueJsonObj(session, values)
-    return {"status": "success"}
+    ret = await settingCrud.set_valueJsonObj(session, values)
+    return ret
 
 
 @app.get("/settings")
