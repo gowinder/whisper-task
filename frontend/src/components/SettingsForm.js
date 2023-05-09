@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TextField, Switch, FormControlLabel, Button, Checkbox, InputLabel, MenuItem, Select, Box, FormControl } from '@mui/material';
+import { TextField, Switch, FormControlLabel, Button, Checkbox, InputLabel, MenuItem, Select, Box, FormControl, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSettings, updateSettings, setSettingsData } from '../store/settingsSlice';
 import { CheckBox } from '@mui/icons-material';
@@ -143,19 +143,18 @@ const EXTENSIONS = [
   { value: '.avi', label: '.avi' },
 ];
 
-function SettingsForm() {
+function SettingsForm(props) {
+    const { isOpen, onClose } = props; // props 中获取 open 和 onClose 属性
     const dispatch = useDispatch();
     const settingsData = useSelector((state) => state.settings.data);
     const fetchStatus = useSelector((state) => state.settings.status);
     const error = useSelector((state) => state.settings.error);
-    // const [formState, setFormState] = useState(settingsData);
 
     useEffect(() => {
       if (fetchStatus === 'idle') {
         dispatch(fetchSettings());
       }
     }, [fetchSettings, fetchStatus, dispatch]);
-    
   
     const handleChange = (event) => {
       const { name, value } = event.target;
@@ -198,7 +197,11 @@ function SettingsForm() {
     // console.log("🚀 ~ file: SettingsForm.js:260 ~ SettingsForm ~ settingsData.root_dir:", settingsData.root_dir)
   
     return (
-      (<form onSubmit={handleSubmit}>
+      (
+        <Dialog open={isOpen} onClose={onClose}>
+        <DialogTitle>Modal Title</DialogTitle>
+        <DialogContent>
+        <form onSubmit={handleSubmit}>
       {settingsData.root_dir && (<TextField
         fullWidth
         margin="normal"
@@ -305,12 +308,16 @@ function SettingsForm() {
           </Select>
         </FormControl>
       )}
-      <Box mt={2}>
+    </form>
+        </DialogContent>
+        <DialogActions>
         <Button variant="contained" color="primary" type="submit">
           Save
         </Button>
-      </Box>
-    </form>)
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      )
     );
   }
 

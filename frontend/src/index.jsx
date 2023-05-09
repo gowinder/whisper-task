@@ -23,15 +23,7 @@ function Index() {
   <ThemeProvider theme={theme}>
 
     <App />
-    <Dialog open={openModal} onClose={() => setOpenModal(false)}>
-          <DialogTitle>Modal Title</DialogTitle>
-          <DialogContent>
-            <SettingsForm />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenModal(false)}>Close</Button>
-          </DialogActions>
-        </Dialog>
+        <SettingsForm isOpen={openModal} onClose={() => {setOpenModal(false)}} />
     <AppBar position="static">
       <Toolbar>
         <IconButton edge="start" color="inherit" aria-label="menu">
