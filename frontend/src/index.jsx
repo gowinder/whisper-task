@@ -15,40 +15,9 @@ import SettingsForm from './components/SettingsForm';
 
 
 function Index() {
-  const [openModal, setOpenModal] = React.useState(false);
 
   return (
-    <Provider store={store}>
-  <React.StrictMode>
-  <ThemeProvider theme={theme}>
-
     <App />
-        <SettingsForm isOpen={openModal} onClose={() => {setOpenModal(false)}} />
-    <AppBar position="static">
-      <Toolbar>
-        <IconButton edge="start" color="inherit" aria-label="menu">
-          <MenuIcon />
-        </IconButton>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Whisper Task
-        </Typography>
-        <IconButton edge="start" color="inherit" aria-label="setting" onClick={() => setOpenModal(true)}>
-          <SettingsIcon />
-        </IconButton>
-      </Toolbar>
-    </AppBar>
-    <Stack sx={{ mx: 1 }} spacing={1}>
-    
-      <WhisperTaskList />
-      <TaskLogs task_type="scheduler" />
-      <TaskLogs task_type="scan" />
-      {/* <SchedulerTaskLogs /> */}
-      {/* <ScanLogs /> */}
-    </Stack>
-  </ThemeProvider>
-  </React.StrictMode>
-
-</Provider>
   )
 }
 
