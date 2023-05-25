@@ -6,7 +6,7 @@ import './index.css';
 
 function App() {
   return (
-    <div className="flex flex-col bg-base-500">
+    <div className="bg-main flex flex-col bg-base-500">
       <AppBar />
     </div>
   );

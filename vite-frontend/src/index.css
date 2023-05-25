@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  .bg-app-bar {
+    @apply bg-base-200 bg-opacity-50 rounded-md;
+  }
+  .bg-main {
+    @apply bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500;
+  }
+  .btn {
+    @apply bg-secondary-500 shadow-md m-2 hover:bg-secondary-500 hover:ring-1
+        hover:ring-secondary-500 opacity-80 hover:opacity-100 hover:bg-opacity-50 
+        ease-in-out duration-300;
+  }
+  .btn-app {
+    @apply flex-none w-6 h-6 mr-2 relative rounded items-center justify-center;
+  }
+  .btn-app-icon {
+    @apply fill-slate-100 hover:fill-slate-300 ease-in-out duration-300 w-4 h-4;
+  }
+}
