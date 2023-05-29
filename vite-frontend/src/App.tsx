@@ -1,20 +1,24 @@
-import React, { SetStateAction, useState } from 'react';
+import React, { SetStateAction, useEffect, useState } from 'react';
 import reactLogo from './assets/react.svg';
-import AppBar from './components/AppBar';
+import AppBar, { ThemeContext } from './components/AppBar';
 import viteLogo from '/vite.svg';
 import './index.css';
+import { themeChange } from 'theme-change';
 
 function App() {
-  const [theme, setTheme] = useState('');
+  const [theme, setTheme] = useState<string>(() => {
+    // Read the theme value from local storage, or return an empty string if it doesn't exist
+    return localStorage.getItem('theme') || 'dark';
+  });
 
-  const handleThemeChange = (newTheme: string) => {
-    console.log('App handleThemeChange', newTheme);
-    setTheme(newTheme);
-  };
+  useEffect(() => {
+    // Save the current theme value to local storage whenever it changes
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   return (
-    <div className={`${theme} flex flex-col bg-base`}>
-      <AppBar onThemeChange={handleThemeChange} />
+    <div className="flex flex-col" data-theme={theme}>
+      <AppBar theme={theme} onChangeTheme={setTheme} />
     </div>
   );
 }
