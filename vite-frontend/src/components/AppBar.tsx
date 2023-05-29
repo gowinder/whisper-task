@@ -1,10 +1,11 @@
 import { Menu, Popover } from '@headlessui/react';
-import React from 'react';
-import { BsList, BsSliders } from 'react-icons/bs';
+import React, { useState } from 'react';
+import { BsList, BsGear } from 'react-icons/bs';
+import Modal from './Modal';
+import SettingsDialog from './SettingsDialog';
 
 export default function AppBar({ onThemeChange }) {
-  const [showSettings, setShowSettings] = React.useState(false);
-  const [selectedTheme, setSelectedTheme] = React.useState('');
+  const [selectedTheme, setSelectedTheme] = useState('');
 
   const handleThemeChange = (event) => {
     const newTheme = event.target.value;
@@ -12,8 +13,15 @@ export default function AppBar({ onThemeChange }) {
     onThemeChange(newTheme);
   };
 
+  const [showModal, setShowModal] = useState(false);
+
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
   return (
     <div className="flex flex-col">
+      <SettingsDialog showModal={showModal} closeModal={closeModal} />
       <div className="flex flex-row justify-between items-center bg-app-bar shadow ">
         <div className="flex-none">
           <Popover className="relative">
@@ -47,8 +55,8 @@ export default function AppBar({ onThemeChange }) {
             <option value="theme-green">green</option>
             <option value="theme-purple">purple</option>
           </select>
-          <button className="btn btn-app">
-            <BsSliders className="btn-app-icon" />
+          <button className="btn btn-app" onClick={() => setShowModal(true)}>
+            <BsGear className="btn-app-icon" />
           </button>
         </div>
       </div>

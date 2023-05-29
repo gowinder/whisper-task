@@ -12,6 +12,7 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      animation: ['responsive', 'motion-safe', 'motion-reduce'],
       colors: {
         primary: withOpacity('--color-primary'),
         primaryfront: withOpacity('--color-primary-front'),
