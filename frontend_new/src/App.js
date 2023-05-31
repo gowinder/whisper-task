@@ -4,7 +4,7 @@ import AppBar from './components/AppBar';
 
 function App() {
   return (
-    <div className="App">
+    <div className="m-auto App">
       <AppBar />
       <TaskLogs task_type="scan" />
       <TaskLogs task_type="scheduler" />

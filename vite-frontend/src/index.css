@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .sig {
+    @apply flex flex-row p-2 rounded-md items-center
+    hover:bg-primary hover:bg-opacity-20 hover:rounded-md hover:duration-200 hover:ease-in-out;
+  }
+
+  .sigl {
+    @apply basis-2/5 bg-neutral text-neutral-content rounded-l-md px-2 ml-1 mr-3;
+  }
+  .sigr {
+    @apply basis-3/5;
+  }
+}
