@@ -105,7 +105,12 @@ class SettingsDialog extends Component<Props, State> {
     return (
       <div className={`modal ${showModal ? 'modal-open' : ''}`}>
         <div className="modal-box flex flex-col space-y-2">
-          <h3 className="font-bold text-lg">Settings</h3>
+          <div className="flex flex-row">
+            <h3 className="grow font-bold text-lg text-center">Settings</h3>
+            <button className="btn flex-none" onClick={closeModal}>
+              X
+            </button>
+          </div>
           <form onSubmit={this.handleSubmit}>
             <div className="sig">
               <span className="sigl">Scan root</span>

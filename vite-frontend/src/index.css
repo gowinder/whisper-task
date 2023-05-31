@@ -9,7 +9,7 @@
   }
 
   .sigl {
-    @apply basis-2/5 bg-neutral rounded-l-md px-2 ml-1 mr-3;
+    @apply basis-2/5 bg-neutral text-neutral-content rounded-l-md px-2 ml-1 mr-3;
   }
   .sigr {
     @apply basis-3/5;
