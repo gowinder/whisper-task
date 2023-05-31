@@ -59,7 +59,7 @@ class AppBar extends Component<Props, State> {
             <h1 className="text-3xl text-base-content">Whisper Task</h1>
           </div>
           <div className="flex justify-center items-center space-x-2">
-            <label className="text-base-content text-opacity-40">Theme</label>
+            <label className="text-base-content text-opacity-40 text-justify">Theme</label>
             <select
               className="rounded "
               value={this.state.selectTheme}
