@@ -14,4 +14,13 @@
   .sigr {
     @apply basis-3/5;
   }
+  .card-span-group {
+    @apply grid grid-cols-4 gap-1;
+  }
+  .card-span-left {
+    @apply text-neutral-content text-xs col-span-2 text-right;
+  }
+  .card-span-right {
+    @apply badge text-accent-content text-neutral-content ml-2 text-xs text-left shadow-md;
+  }
 }

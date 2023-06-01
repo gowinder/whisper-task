@@ -35,7 +35,7 @@ class AppBar extends Component<Props, State> {
 
   render() {
     return (
-      <div className="flex flex-col">
+      <div className="flex flex-col m-2 m-1:md">
         <SettingsDialog showModal={this.state.showModal} closeModal={this.closeModal} />
         <div className="flex flex-row justify-between items-center shadow bg-base ">
           <div className="flex-none">
@@ -78,12 +78,6 @@ class AppBar extends Component<Props, State> {
               <BsGear className="stroke-primary-content scale-150" />
             </button>
           </div>
-        </div>
-        <div>
-          <span>abc</span>
-        </div>
-        <div>
-          <span>abc</span>
         </div>
       </div>
     );
